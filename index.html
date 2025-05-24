@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CCCP Webhook Spammer</title>
+  <style>
+    body {
+      background-color: #1e1e2f;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background-color: #2e2e3e;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      width: 400px;
+      color: white;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: none;
+      font-size: 14px;
+    }
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+    }
+    button {
+      width: 48%;
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .send {
+      background-color: #28a745;
+      color: white;
+    }
+    .stop {
+      background-color: #dc3545;
+      color: white;
+    }
+    #status {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>CCCP Webhook Spammer</h2>
+    <input type="text" id="webhook" placeholder="Webhook URL">
+    <textarea id="message" rows="3" placeholder="Message"></textarea>
+    <input type="number" id="count" placeholder="送信回数">
+    <div class="buttons">
+      <button class="send" onclick="startSpamming()">SEND</button>
+      <button class="stop" onclick="stopSpamming()">STOP</button>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <script>
+    let stop = false;
+
+    async function startSpamming() {
+      stop = false;
+      const url = document.getElementById("webhook").value;
+      const message = document.getElementById("message").value;
+      const count = parseInt(document.getElementById("count").value);
+
+      if (!url || !message || !count) {
+        alert("全ての項目を入力してください。");
+        return;
+      }
+
+      for (let i = 1; i <= count; i++) {
+        if (stop) {
+          document.getElementById("status").innerText = "✅ 停止しました";
+          break;
+        }
+
+        try {
+          await fetch(url, {
+            method: "POST",
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: `${message} (${i}/${count})` })
+          });
+          document.getElementById("status").innerText = `[${i}/${count}] 送信しました`;
+        } catch (e) {
+          document.getElementById("status").innerText = `エラー: ${e}`;
+          break;
+        }
+
+        await new Promise(r => setTimeout(r, 500));
+      }
+    }
+
+    function stopSpamming() {
+      stop = true;
+    }
+  </script>
+</body>
+</html>
