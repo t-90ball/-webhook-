@@ -67,7 +67,7 @@
     <input type="text" id="webhook" placeholder="Webhook URL">
     <textarea id="message" rows="3" placeholder="Message"></textarea>
     <input type="number" id="count" placeholder="送信回数">
-    <input type="number" id="interval" placeholder="送信間隔 (ms)">
+    <input type="number" id="interval" placeholder="送信間隔 (ms、最小1)" min="1">
     <div class="buttons">
       <button class="send" onclick="startSpamming()">SEND</button>
       <button class="stop" onclick="stopSpamming()">STOP</button>
@@ -83,34 +83,44 @@
       const url = document.getElementById("webhook").value;
       const message = document.getElementById("message").value;
       const count = parseInt(document.getElementById("count").value);
-      const interval = parseInt(document.getElementById("interval").value) || 500;
+      let interval = parseInt(document.getElementById("interval").value);
 
       if (!url || !message || !count) {
         alert("全ての項目を入力してください。");
         return;
       }
 
-      for (let i = 1; i <= count; i++) {
-        if (stop) {
-          document.getElementById("status").innerText = "✅ 停止しました";
-          break;
-        }
+      if (isNaN(interval) || interval < 1) interval = 1;
 
-        try {
-          await fetch(url, {
-            method: "POST",
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content: message })
-          });
-        } catch (e) {
-          document.getElementById("status").innerText = `エラー: ${e}`;
-          break;
-        }
+      let sent = 0;
 
-        document.getElementById("status").innerText = `${i}/${count} 件目送信中...`;
-        await new Promise(r => setTimeout(r, interval));
+      const tasks = Array.from({ length: count }, (_, i) => {
+        return new Promise(resolve => {
+          setTimeout(async () => {
+            if (stop) return resolve();
+            try {
+              await fetch(url, {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: message })
+              });
+              sent++;
+              document.getElementById("status").innerText = `${sent}/${count} 件目送信中...`;
+            } catch (e) {
+              document.getElementById("status").innerText = `エラー: ${e}`;
+              stop = true;
+            }
+            resolve();
+          }, i * interval);
+        });
+      });
+
+      await Promise.all(tasks);
+      if (!stop) {
+        document.getElementById("status").innerText = `✅ 送信完了 (${count} 件)`;
+      } else {
+        document.getElementById("status").innerText = "✅ 停止しました";
       }
-      document.getElementById("status").innerText = `✅ 送信完了 (${count} 件)`;
     }
 
     function stopSpamming() {
@@ -119,4 +129,5 @@
   </script>
 </body>
 </html>
+
 
