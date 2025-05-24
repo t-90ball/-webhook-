@@ -98,16 +98,17 @@
           await fetch(url, {
             method: "POST",
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content: `${message} (${i}/${count})` })
+            body: JSON.stringify({ content: message })
           });
-          document.getElementById("status").innerText = `[${i}/${count}] 送信しました`;
         } catch (e) {
           document.getElementById("status").innerText = `エラー: ${e}`;
           break;
         }
 
+        document.getElementById("status").innerText = `${i}/${count} 件目送信中...`;
         await new Promise(r => setTimeout(r, 500));
       }
+      document.getElementById("status").innerText = `✅ 送信完了 (${count} 件)`;
     }
 
     function stopSpamming() {
@@ -116,3 +117,4 @@
   </script>
 </body>
 </html>
+
